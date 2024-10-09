@@ -353,8 +353,19 @@ function init() {
   setSize(settings.map)
 
   window.addEventListener('keydown', e => {
-    if (e.key[0] !== 'A') return
-    handleWalk(e.key.toLowerCase().replace('arrow',''))
+    const lowerCaseKey = e.key.toLowerCase()
+    if (['w','a','s','d'].includes(lowerCaseKey)) {
+      handleWalk({
+        w: 'up',
+        a: 'left',
+        s: 'down',
+        d: 'right'
+      }[lowerCaseKey])
+    } else if (e.key[0] !== 'A') {
+      return
+    } else {
+      handleWalk(lowerCaseKey.replace('arrow',''))
+    }
   })
   window.addEventListener('keyup', () => {
     player.walkingDirection = null
