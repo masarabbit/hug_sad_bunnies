@@ -4,6 +4,8 @@ function init() {
     mapCover: document.querySelector('.map-cover'), 
     indicator: document.querySelector('.indicator'),
     player: document.querySelector('.player'), 
+    endMessage: document.querySelector('.end-message'),
+    button: document.querySelector('button')
   }
 
   const control = {
@@ -71,7 +73,7 @@ function init() {
 
   const addBunny = () => {
     const bunny = {
-      id: settings.elements.length + 1,
+      id: `bunny-${settings.bunnies.length + 1}`,
       x: getRandomPos('w'), y: getRandomPos('h'),
       frameOffset: 1,
       animationTimer: null,
@@ -87,7 +89,7 @@ function init() {
       sad: true,
       buffer: 30,
     }
-    settings.elements.push(bunny)
+    settings.bunnies.push(bunny)
     settings.map.el.appendChild(bunny.el)
     bunny.sprite.el = bunny.el.childNodes[0]
     bunny.el.style.zIndex = bunny.y
@@ -97,7 +99,7 @@ function init() {
 
   const addTree = () => {
     const tree = {
-      id: settings.elements.length + 1,
+      id: `tree-${settings.elements.length + 1}`,
       x: getRandomPos('w'), y: getRandomPos('h'),
       el: Object.assign(document.createElement('div'), 
       { 
@@ -118,6 +120,7 @@ function init() {
       x: 0, y: 0,
     },
     elements: [],
+    bunnies: [],
     map: {
       el: document.querySelector('.map'),
       walls: [],
@@ -155,6 +158,15 @@ function init() {
     actor.frameOffset = actor.frameOffset === 1 ? 2 : 1
     actor.sprite.x = actor.frameOffset * (2 * -20)
     setBackgroundPos(actor.sprite)
+  }
+
+  const updateSadBunnyCount = () => {
+    const sadBunnyCount = settings.bunnies.filter(b => b.sad).length
+    elements.indicator.innerHTML = sadBunnyCount ? `x ${sadBunnyCount}` : ''
+    if (!sadBunnyCount) {
+      elements.endMessage.classList.remove('d-none')
+      elements.indicator.classList.add('happy')
+    }
   }
 
   const triggerBunnyMessage = (bunny, classToAdd) => {
@@ -195,6 +207,7 @@ function init() {
       player.pause = false
       settings.map.el.classList.remove('slow-transition')
       triggerBunnyMessage(bunny, classToAdd === 'hug-bear-bunny' ? 'happy-left' : 'happy-right')
+      updateSadBunnyCount()
     }, 1800)
   }
 
@@ -202,17 +215,20 @@ function init() {
     const newPos = {...actor}
     newPos[para] += dist
     if (actor === player && !player.pause) {
-      const bunnyToHug = settings.elements.filter(el => el.sad && el.id !== actor.id).find(el => distanceBetween(el, newPos) <= el.buffer)
+      const bunnyToHug = settings.bunnies.find(el => el.sad && el.id !== actor.id && distanceBetween(el, newPos) <= el.buffer)
       if (bunnyToHug) {
         hugBunny(bunnyToHug)
         return 
       }
     } 
-    if (settings.elements.filter(el => el.id !== actor.id).some(el => {
+    if ([
+      ...settings.bunnies.filter(el => el.id !== actor.id), 
+      ...settings.elements].some(el => {
       return distanceBetween(el, newPos) <= el.buffer 
-            && distanceBetween(el, actor) > el.buffer // TODO need to check if this works
+            && distanceBetween(el, actor) > el.buffer
     })) return
     const buffer = 40
+
     if (para === 'x') {
       if (dist < 0) return actor.x + dist - buffer > 0
       return actor.x + dist + buffer < settings.map.w 
@@ -233,7 +249,6 @@ function init() {
         positionMap()
         setPos(settings.map)
         player.el.parentNode.style.zIndex = player.y
-        elements.indicator.innerHTML = `x:${player.x} | y:${player.y}`
       } else {
         actor[para] += dist
         setPos(actor)
@@ -353,6 +368,9 @@ function init() {
   
   new Array(45).fill('').forEach(()=> addBunny())
   new Array(100).fill('').forEach(()=> addTree())
+
+  elements.button.addEventListener('click', ()=> location.reload())
+  updateSadBunnyCount()
 }
 
 window.addEventListener('DOMContentLoaded', init)
