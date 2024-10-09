@@ -72,6 +72,7 @@ function init() {
 
   const triggerBunnyWalk = bunny => {
     bunny.animationTimer = setInterval(()=> {
+      if (!settings.isWindowActive) return
       const dir = ['up', 'down', 'right', 'left'][Math.floor(Math.random() * 4)]
       const { d } = settings
 
